@@ -28,14 +28,14 @@ import warnings
 import logstash
 
 
-def get_headers(line):
+def get_keyvals(line):
     """
     Parse Supervisor message headers.
     """
     return dict([x.split(':') for x in line.split()])
 
 
-def eventdata(payload):
+def parse_payload(payload):
     """
     Parse a Supervisor event.
     """
@@ -44,7 +44,7 @@ def eventdata(payload):
     else:
         headerinfo = payload
         data = ''
-    headers = get_headers(headerinfo)
+    headers = get_keyvals(headerinfo)
     return headers, data
 
 
@@ -64,28 +64,46 @@ def send_ok(stdout):
     stdout.flush()
 
 
-def supervisor_events(stdin, stdout, *events):
+def process_io(stdin, stdout):
+    """
+    Handle comunication with Supervisor to receive events and their payloads
+    """
+    send_ready(stdout)
+
+    line = stdin.readline()
+    print line
+    # line = 'ver:3.0 server:supervisor serial:0 pool:logstash-notifier poolserial:0 eventname:PROCESS_STATE_STARTING len:84\n'
+    keyvals = get_keyvals(line)
+    # keyvals = {'ver': '3.0', 'poolserial': '0', 'len': '84', 'server': 'supervisor', 'eventname': 'PROCESS_STATE_STARTING', 'serial': '0', 'pool': 'logstash-notifier'}
+    payload = stdin.read(int(keyvals['len']))
+    # payload = 'processname:logstash-notifier groupname:logstash-notifier from_state:STOPPED tries:0'
+
+    body, data = parse_payload(payload)
+
+    return keyvals, body, data
+
+
+def supervisor_event_loop(stdin, stdout, *events):
     """
     Runs forever to receive supervisor events
     """
     while True:
-        send_ready(stdout)
+        print '.'
+        keyvals, body, data = process_io(stdin, stdout)
 
-        line = stdin.readline()
-        headers = get_headers(line)
-
-        payload = stdin.read(int(headers['len']))
-        event_body, event_data = eventdata(payload)
-
-        if headers['eventname'] not in events:
+        # if we're not listening to the event that we've received, ignore it
+        if keyvals['eventname'] not in events:
+            print '.ignored'
             send_ok(stdout)
             continue
 
-        if event_body['processname'] == 'logstash-notifier':
+        # if it's an event we caused, ignore it
+        if body['processname'] == 'logstash-notifier':
+            print '.skipped'
             send_ok(stdout)
             continue
 
-        yield headers, event_body, event_data
+        yield keyvals, body, data
 
         send_ok(stdout)
 
@@ -193,10 +211,9 @@ def application(include=None, capture_output=False, append_newline=False):
     if capture_output:
         events += ['PROCESS_LOG_STDOUT', 'PROCESS_LOG_STDERR']
 
-    for headers, event_body, event_data in supervisor_events(
-            sys.stdin, sys.stdout, *events):
-        extra = event_body.copy()
-        extra['eventname'] = headers['eventname']
+    for keyvals, body, data in supervisor_event_loop(sys.stdin, sys.stdout, *events):
+        extra = body.copy()
+        extra['eventname'] = keyvals['eventname']
 
         if include is not None:
             user_data = {}
@@ -207,16 +224,16 @@ def application(include=None, capture_output=False, append_newline=False):
                 extra['user_data'] = user_data
 
         # Events, like starting/stopping don't have a message body and
-        # the data is set to '' in event_data(). Stdout/Stderr events
+        # the data is set to '' in data(). Stdout/Stderr events
         # do have a message body, so use that if it's present, or fall
         # back to eventname/processname if it's not.
-        if not len(event_data) > 0:
-            event_data = '%s %s' % (
-                headers['eventname'],
-                event_body['processname']
+        if not len(data) > 0:
+            data = '%s %s' % (
+                keyvals['eventname'],
+                body['processname']
             )
 
-        logger.info(event_data, extra=extra)
+        logger.info(data, extra=extra)
 
 
 def run_with_coverage():  # pragma: no cover
