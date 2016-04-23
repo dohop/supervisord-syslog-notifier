@@ -25,11 +25,7 @@ import threading
 from time import sleep
 from testfixtures import TempDirectory
 from six.moves import socketserver
-
-try:
-    from unittest2 import TestCase
-except ImportError:
-    from unittest import TestCase
+from .compat import TestCase
 
 
 class LogstashHandler(socketserver.BaseRequestHandler):

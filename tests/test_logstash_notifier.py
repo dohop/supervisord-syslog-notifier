@@ -19,11 +19,7 @@ Test logstash_notifier
 
 import os
 
-try:
-    from unittest2 import TestCase
-except ImportError:
-    from unittest import TestCase
-
+from .compat import TestCase
 from .utilities import BaseSupervisorTestCase, record, get_config
 from logstash_notifier import get_value_from_input
 

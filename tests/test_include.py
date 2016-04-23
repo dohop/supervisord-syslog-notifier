@@ -18,9 +18,9 @@ Tests for the inclusion logic
 """
 
 import os
-from unittest import TestCase
 
 from logstash_notifier import get_value_from_input
+from .compat import TestCase
 
 
 class TestIncludeParser(TestCase):
