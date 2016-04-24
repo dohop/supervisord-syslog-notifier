@@ -1,5 +1,6 @@
 testfixtures
 nose
+mock
 # needed for python 2.6
 unittest2
 coverage
