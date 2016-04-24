@@ -1,9 +1,7 @@
 .idea
 dist
 build
-venv
-venv3.4
-venv3.5
+venv*
 
 *.pyc
 supervisor_logstash_notifier.egg-info
