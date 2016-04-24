@@ -244,8 +244,8 @@ def main():  # pragma: no cover
     parser.add_argument(
         '-i', '--include',
         nargs='*', default=list(),
-        help='include named environment variables and/or arbitrary metadata '
-             'keyvals in messages')
+        help='include named environment variables and/or arbitrary metadata keyvals in messages'
+    )
     parser.add_argument(
         '-c', '--coverage',
         action='store_true', default=False,
@@ -254,8 +254,7 @@ def main():  # pragma: no cover
     parser.add_argument(
         '-o', '--capture-output',
         action='store_true', default=False,
-        help='capture stdout/stderr output from supervisor '
-             'processes in addition to events'
+        help='capture stdout/stderr output from supervisor processes in addition to events'
     )
     parser.add_argument(
         '-n', '--append-newline',
