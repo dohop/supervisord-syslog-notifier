@@ -108,9 +108,8 @@ def supervisor_event_loop(stdin, stdout, *events):
 
 def get_value_from_input(text):
     """
-    Parses the input from the command line to work out if we've been given the
-    name of an environment variable to include or a keyval of arbitrary data to
-    include instead
+    Parses the input from the command line to work out if we've been given the name of an environment
+    variable to include or a keyval of arbitrary data to include instead
     """
     values = {}
     if '=' in text:
@@ -128,28 +127,23 @@ def __newline_formatter(func):
     """
     def __wrapped_func(*args, **kwargs):
         """
-        Wrapper function that appends a newline to result of original fucntion
+        Wrapper function that appends a newline to result of original function
         """
         result = func(*args, **kwargs)
 
-        # The result may be a string, or bytes. In python 2 they are the
-        # same, but in python 3, they are not. First, check for strings
-        # as that works the same in python 2 and 3, THEN check for bytes,
-        # as that implementation is python 3 specific. If it's neither
-        # (future proofing), we use a regular new line
+        # The result may be a string, or bytes. In python 2 they are the same, but in python 3, they are not.
+        # First, check for strings as that works the same in python 2 and 3, THEN check for bytes, as that
+        # implementation is python 3 specific. If it's neither (future proofing), we use a regular new line
         line_ending = "\n"
         if isinstance(result, str):
             line_ending = "\n"
         elif isinstance(result, bytes):
-            # We are redefining the variable type on purpose since python
-            # broke backwards compatibility between 2 & 3. Pylint will
-            # throw an error on this, so we have to disable the check.
-            # pylint: disable=redefined-variable-type
+            # We are redefining the variable type on purpose since python broke backwards compatibility between 2 & 3.
             line_ending = b"\n"
 
         # Avoid double line endings
         if not result.endswith(line_ending):
-            result = result + line_ending
+            result += line_ending
 
         return result
 
@@ -159,18 +153,15 @@ def __newline_formatter(func):
 
 def get_logger(append_newline=False):
     """
-    Sets up the logger used to send the supervisor events and messages to
-    the logstash server, via the socket type provided, port and host defined
-    in the environment
+    Sets up the logger used to send the supervisor events and messages to the logstash server,
+    via the socket type provided, port and host defined in the environment
     """
-
     try:
         host = os.environ['LOGSTASH_SERVER']
         port = int(os.environ['LOGSTASH_PORT'])
         socket_type = os.environ['LOGSTASH_PROTO']
     except KeyError:
-        sys.exit("LOGSTASH_SERVER, LOGSTASH_PORT and LOGSTASH_PROTO are "
-                 "required.")
+        sys.exit("LOGSTASH_SERVER, LOGSTASH_PORT and LOGSTASH_PROTO are required.")
 
     logstash_handler = None
     if socket_type == 'udp':
@@ -185,14 +176,12 @@ def get_logger(append_newline=False):
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    # To be able to append newlines to the logger output, we'll need to
-    # wrap the formatter. As we can't predict the formatter class, it's
-    # easier to wrap the format() function, which is part of the logger
-    # spec than it is to override/wrap the formatter class, whose name
-    # is determined by the logstash class.
+    # To be able to append newlines to the logger output, we'll need to wrap the formatter.
+    # As we can't predict the formatter class, it's easier to wrap the format() function,
+    # which is part of the logger spec than it is to override/wrap the formatter class,
+    # whose name is determined by the logstash class.
     if append_newline:
-        handler.formatter.format = \
-            __newline_formatter(handler.formatter.format)
+        handler.formatter.format = __newline_formatter(handler.formatter.format)
 
     return logger
 
@@ -221,15 +210,11 @@ def application(include=None, capture_output=False, append_newline=False):
             if len(user_data) > 0:
                 extra['user_data'] = user_data
 
-        # Events, like starting/stopping don't have a message body and
-        # the data is set to '' in data(). Stdout/Stderr events
-        # do have a message body, so use that if it's present, or fall
-        # back to eventname/processname if it's not.
+        # Events, like starting/stopping don't have a message body and the data is set to '' in data().
+        # Stdout/Stderr events do have a message body, so use that if it's present, or fallback to
+        # eventname/processname if it's not.
         if not len(data) > 0:
-            data = '%s %s' % (
-                keyvals['eventname'],
-                body['processname']
-            )
+            data = '%s %s' % (keyvals['eventname'], body['processname'])
 
         logger.info(data, extra=extra)
 
@@ -241,10 +226,8 @@ def run_with_coverage():  # pragma: no cover
     try:
         import coverage
     except ImportError:
-        warnings.warn(
-            'Coverage data will not be generated because coverage is not '
-            'installed. Please run `pip install coverage` and try again.'
-        )
+        warnings.warn('Coverage data will not be generated because coverage is not installed. '
+                      'Please run `pip install coverage` and try again.')
         return
 
     coverage.process_startup()

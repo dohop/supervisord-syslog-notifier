@@ -42,24 +42,18 @@ class TestEventData(TestCase):
         self.assertEqual(parse_payload(payload), ({}, ''))
 
     def test_eventdata_parsing_headers(self):
-        # the payload is an empty string, so the response will be an empty
-        # series of headers and data
         payload = 'a:1 b:2 c:3'
         headers, data = parse_payload(payload)
         self.assertDictEqual(headers, {'a': '1', 'b': '2', 'c': '3'})
         self.assertEqual(data, '')
 
     def test_eventdata_parsing_headers_trailing_newline(self):
-        # the payload is an empty string, so the response will be an empty
-        # series of headers and data
         payload = 'a:1 b:2 c:3\n'
         headers, data = parse_payload(payload)
         self.assertDictEqual(headers, {'a': '1', 'b': '2', 'c': '3'})
         self.assertEqual(data, '')
 
     def test_eventdata_parsing_headers_and_data(self):
-        # the payload is an empty string, so the response will be an empty
-        # series of headers and data
         payload = 'a:1 b:2 c:3\nabcdefghijklmnopqrstuvwxyz'
         headers, data = parse_payload(payload)
         self.assertDictEqual(headers, {'a': '1', 'b': '2', 'c': '3'})
@@ -117,7 +111,7 @@ class TestEventLoop(TestCase):
         stdin = cStringIO(line * 2)
         stdout = cStringIO()
         generator = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT')
-        for i in xrange(2):
+        for _ in xrange(2):
             # iterate through the loop twice, extracting the messages
             keyvals, body, data = six.next(generator)
             self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(line)})
