@@ -18,7 +18,7 @@ import logging
 import logstash
 
 
-def __newline_formatter(func):
+def newline_formatter(func):
     """
     Wrap a formatter function so a newline is appended if needed to the output
     """
@@ -91,7 +91,7 @@ def get_logger(append_newline=False):
     # which is part of the logger spec than it is to override/wrap the formatter class,
     # whose name is determined by the logstash class.
     if append_newline:
-        handler.formatter.format = __newline_formatter(handler.formatter.format)
+        handler.formatter.format = newline_formatter(handler.formatter.format)
 
     logger = logging.getLogger('supervisor')
     logger.addHandler(handler)

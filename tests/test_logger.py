@@ -17,10 +17,11 @@
 Tests for getting the right log handler
 """
 
+import logging
 import logstash
 import os
 from mock import patch
-from logstash_notifier.logger import get_host_port_socket, get_log_handler
+from logstash_notifier.logger import get_host_port_socket, get_log_handler, newline_formatter, get_logger
 from .compat import TestCase, cStringIO, xrange
 
 
@@ -55,3 +56,49 @@ class TestLogger(TestCase):
         with patch.dict(os.environ, LOGSTASH_SERVER='127.0.0.1', LOGSTASH_PORT='9001', LOGSTASH_PROTO='tcp'):
             host, port, socket_type = get_host_port_socket()
             self.assertIs(get_log_handler(socket_type), logstash.TCPLogstashHandler)
+
+
+def foo(input_string):
+    return input_string
+
+
+class TestNewlineFormatter(TestCase):
+    def setUp(self):
+        self.wrapped = newline_formatter(foo)
+
+    def test_newline_formatter_with_strings(self):
+        self.assertEqual(self.wrapped('bar'), 'bar\n')
+
+    def test_newline_formatter_with_strings_with_trailing_linebreak(self):
+        self.assertEqual(self.wrapped('bar\n'), 'bar\n')
+
+    def test_newline_formatter_with_bytes(self):
+        self.assertEqual(self.wrapped(b'bar'), b'bar\n')
+
+    def test_newline_formatter_with_bytes_with_trailing_linebreak(self):
+        self.assertEqual(self.wrapped(b'bar\n'), b'bar\n')
+
+    def test_newline_formatter_with_unicode(self):
+        self.assertEqual(self.wrapped(u'bar'), u'bar\n')
+
+    def test_newline_formatter_with_unicode_with_trailing_linebreak(self):
+        self.assertEqual(self.wrapped(u'bar\n'), u'bar\n')
+
+
+class TestGetLogger(TestCase):
+    def setUp(self):
+        self.mock_environ = patch.dict(os.environ)
+        self.mock_environ.start()
+
+        for key in ('LOGSTASH_SERVER', 'LOGSTASH_PORT', 'LOGSTASH_PROTO'):
+            if key in os.environ:
+                del os.environ[key]
+
+    def tearDown(self):
+        self.mock_environ.stop()
+
+    def test_get_logger_without_newlines(self):
+        with patch.dict(os.environ, LOGSTASH_SERVER='127.0.0.1', LOGSTASH_PORT='9001', LOGSTASH_PROTO='tcp'):
+            logger = get_logger(append_newline=False)
+            self.assertIsInstance(logger, logging.Logger)
+            self.assertIsInstance(logger.handlers[0], logstash.TCPLogstashHandler)
