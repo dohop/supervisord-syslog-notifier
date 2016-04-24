@@ -17,7 +17,7 @@
 Tests for various event handler functions
 """
 
-from cStringIO import StringIO
+from six.moves.cStringIO import StringIO
 
 from logstash_notifier import get_keyvals, parse_payload, process_io, supervisor_event_loop
 from .compat import TestCase
