@@ -18,8 +18,8 @@ Compatibility layer for various changed objects
 """
 
 try:
-    from unittest2 import TestCase
+    from unittest2 import TestCase, skipIf
 except ImportError:
-    from unittest import TestCase
+    from unittest import TestCase, skipIf
 
 from six.moves import cStringIO, xrange, socketserver
