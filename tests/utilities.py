@@ -46,6 +46,7 @@ class BaseSupervisorTestCase(TestCase):
     Base class for running supervisor tests
     """
     maxDiff = None
+    integration_test = 1
 
     def __init__(self, *args, **kwargs):
         super(BaseSupervisorTestCase, self).__init__(*args, **kwargs)

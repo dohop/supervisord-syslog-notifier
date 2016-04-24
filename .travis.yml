@@ -18,7 +18,7 @@ install:
 - pip install coveralls
 script:
 - if [ "$TRAVIS_PYTHON_VERSION" != "2.6" ]; then .githooks/pre-commit -f; fi
-- nosetests --with-coverage --cover-erase --cover-tests
+- nosetests -a '!integration_test' --with-coverage --cover-erase --cover-tests
 sudo: false
 after_success:
 - coverage combine
