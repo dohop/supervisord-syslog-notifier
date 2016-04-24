@@ -26,9 +26,15 @@ from .compat import TestCase, cStringIO, xrange
 
 class TestLogger(TestCase):
     def setUp(self):
+        self.mock_environ = patch.dict(os.environ)
+        self.mock_environ.start()
+
         for key in ('LOGSTASH_SERVER', 'LOGSTASH_PORT', 'LOGSTASH_PROTO'):
             if key in os.environ:
                 del os.environ[key]
+
+    def tearDown(self):
+        self.mock_environ.stop()
 
     def test_missing_environ_keys(self):
         # calling get_logger when one or more of the keys is missing, will raise RuntimeError
