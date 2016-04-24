@@ -124,7 +124,7 @@ def application(include=None, capture_output=False, append_newline=False):
     """
     Main application loop.
     """
-    logger = get_logger(append_newline=append_newline)
+    log_instance = get_logger(append_newline=append_newline)
 
     events = ['BACKOFF', 'FATAL', 'EXITED', 'STOPPED', 'STARTING', 'RUNNING']
     events = ['PROCESS_STATE_' + state for state in events]
@@ -150,7 +150,7 @@ def application(include=None, capture_output=False, append_newline=False):
         if not len(data) > 0:
             data = '%s %s' % (keyvals['eventname'], body['processname'])
 
-        logger.info(data, extra=extra)
+        log_instance.info(data, extra=extra)
 
 
 def run_with_coverage():  # pragma: no cover
