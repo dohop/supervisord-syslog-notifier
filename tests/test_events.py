@@ -17,7 +17,7 @@
 Tests for various event handler functions
 """
 
-from six.moves.cStringIO import StringIO
+from six.moves import cStringIO
 
 from logstash_notifier import get_keyvals, parse_payload, process_io, supervisor_event_loop
 from .compat import TestCase
@@ -68,16 +68,16 @@ class TestEventData(TestCase):
 class TestSupervisorEventProcess(TestCase):
     def test_process_io_regular_usage(self):
         # write the necessary setup to the pipe
-        stdin = StringIO('a:1 b:2 c:3 len:14\nalphabet:abcde')
-        keyvals, body, data = process_io(stdin, StringIO())
+        stdin = cStringIO('a:1 b:2 c:3 len:14\nalphabet:abcde')
+        keyvals, body, data = process_io(stdin, cStringIO())
         self.assertDictEqual(keyvals, {'a': '1', 'b': '2', 'c': '3', 'len': '14'})
         self.assertEqual(body, {'alphabet': 'abcde'})
 
     def test_process_io_missing_length(self):
         # if the 'len' field is not in the message, the handler fails, because
         # it needs that to determine how much datato read from the input
-        stdin = StringIO('a:1 b:2 c:3\nabcdefghijklmnopqrstuvwxyz')
-        self.assertRaises(KeyError, process_io, stdin, StringIO())
+        stdin = cStringIO('a:1 b:2 c:3\nabcdefghijklmnopqrstuvwxyz')
+        self.assertRaises(KeyError, process_io, stdin, cStringIO())
 
 
 class TestEventLoop(TestCase):
@@ -104,8 +104,8 @@ class TestEventLoop(TestCase):
         # from ourselves; we don't care about events we're causing, and so filter out
         # anything with a processname that is `logstash-notifier`
         line = self.make_line('RANDOM_EVENT', 'foo', key='val')
-        stdin = StringIO(line)
-        stdout = StringIO()
+        stdin = cStringIO(line)
+        stdout = cStringIO()
         keyvals, body, data = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT').next()
         self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(line)})
         self.assertDictEqual(body, {'key': 'val', 'processname': 'foo'})
@@ -113,8 +113,8 @@ class TestEventLoop(TestCase):
 
     def test_multiple_events(self):
         line = self.make_line('RANDOM_EVENT', 'foo', key='val')
-        stdin = StringIO(line * 2)
-        stdout = StringIO()
+        stdin = cStringIO(line * 2)
+        stdout = cStringIO()
         generator = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT')
         for i in xrange(2):
             # iterate through the loop twice, extracting the messages
@@ -130,8 +130,8 @@ class TestEventLoop(TestCase):
         # event.
         event_one = self.make_line('RANDOM_EVENT', 'logstash-notifier')
         event_two = self.make_line('RANDOM_EVENT', 'notepad')
-        stdin = StringIO(event_one + event_two)
-        stdout = StringIO()
+        stdin = cStringIO(event_one + event_two)
+        stdout = cStringIO()
         keyvals, body, data = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT').next()
         self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(event_two)})
         self.assertDictEqual(body, {'processname': 'notepad'})
@@ -142,8 +142,8 @@ class TestEventLoop(TestCase):
         event_one = self.make_line('UNKNOWN', 'winword')
         event_two = self.make_line('WHOCARES', 'notepad')
         event_three = self.make_line('WHATEVER', 'calc')
-        stdin = StringIO(event_one + event_two + event_three)
-        stdout = StringIO()
+        stdin = cStringIO(event_one + event_two + event_three)
+        stdout = cStringIO()
         generator = supervisor_event_loop(stdin, stdout, 'WHOCARES', 'WHATEVER')
         keyvals, body, _ = generator.next()
         self.assertDictEqual(keyvals, {'eventname': 'WHOCARES', 'len': self.payload_length(event_two)})
