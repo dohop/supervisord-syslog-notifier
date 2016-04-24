@@ -83,9 +83,9 @@ class TestSupervisorEventProcess(TestCase):
 
 class TestEventLoop(TestCase):
     def make_line(self, event, process, **kwargs):
-        payload = 'processname:{}'.format(process)
+        payload = 'processname:{0}'.format(process)
         for keyword, value in six.iteritems(kwargs):
-            payload += ' {}:{}'.format(keyword, value)
+            payload += ' {0}:{1}'.format(keyword, value)
 
         line = 'eventname:{event} len:{length}\n{payload}'.format(
             event=event,
