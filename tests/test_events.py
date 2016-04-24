@@ -17,7 +17,8 @@
 Tests for various event handler functions
 """
 
-from six.moves import cStringIO
+import six
+from six.moves import cStringIO, xrange
 
 from logstash_notifier import get_keyvals, parse_payload, process_io, supervisor_event_loop
 from .compat import TestCase
@@ -83,7 +84,7 @@ class TestSupervisorEventProcess(TestCase):
 class TestEventLoop(TestCase):
     def make_line(self, event, process, **kwargs):
         payload = 'processname:{}'.format(process)
-        for keyword, value in kwargs.iteritems():
+        for keyword, value in six.iteritems(kwargs):
             payload += ' {}:{}'.format(keyword, value)
 
         line = 'eventname:{event} len:{length}\n{payload}'.format(
@@ -106,7 +107,7 @@ class TestEventLoop(TestCase):
         line = self.make_line('RANDOM_EVENT', 'foo', key='val')
         stdin = cStringIO(line)
         stdout = cStringIO()
-        keyvals, body, data = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT').next()
+        keyvals, body, data = six.next(supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT'))
         self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(line)})
         self.assertDictEqual(body, {'key': 'val', 'processname': 'foo'})
         self.assertEqual(data, '')
@@ -118,7 +119,7 @@ class TestEventLoop(TestCase):
         generator = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT')
         for i in xrange(2):
             # iterate through the loop twice, extracting the messages
-            keyvals, body, data = generator.next()
+            keyvals, body, data = six.next(generator)
             self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(line)})
             self.assertDictEqual(body, {'key': 'val', 'processname': 'foo'})
             self.assertEqual(data, '')
@@ -132,7 +133,7 @@ class TestEventLoop(TestCase):
         event_two = self.make_line('RANDOM_EVENT', 'notepad')
         stdin = cStringIO(event_one + event_two)
         stdout = cStringIO()
-        keyvals, body, data = supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT').next()
+        keyvals, body, data = six.next(supervisor_event_loop(stdin, stdout, 'RANDOM_EVENT'))
         self.assertDictEqual(keyvals, {'eventname': 'RANDOM_EVENT', 'len': self.payload_length(event_two)})
         self.assertDictEqual(body, {'processname': 'notepad'})
         self.assertEqual(data, '')
@@ -145,9 +146,9 @@ class TestEventLoop(TestCase):
         stdin = cStringIO(event_one + event_two + event_three)
         stdout = cStringIO()
         generator = supervisor_event_loop(stdin, stdout, 'WHOCARES', 'WHATEVER')
-        keyvals, body, _ = generator.next()
+        keyvals, body, _ = six.next(generator)
         self.assertDictEqual(keyvals, {'eventname': 'WHOCARES', 'len': self.payload_length(event_two)})
         self.assertDictEqual(body, {'processname': 'notepad'})
-        keyvals, body, _ = generator.next()
+        keyvals, body, _ = six.next(generator)
         self.assertDictEqual(keyvals, {'eventname': 'WHATEVER', 'len': self.payload_length(event_three)})
         self.assertDictEqual(body, {'processname': 'calc'})
