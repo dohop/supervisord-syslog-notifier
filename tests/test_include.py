@@ -28,9 +28,7 @@ class TestIncludeParser(TestCase):
     Tests the parsing of the include options
     """
     def test_key_val_parsing(self):
-        """
-        Test parsing of keyval strings
-        """
+        # Test parsing of keyval strings
         self.assertEqual(
             get_value_from_input('fruits="pear,kiwi,banana"'),
             {'fruits': '"pear,kiwi,banana"'}
@@ -45,9 +43,7 @@ class TestIncludeParser(TestCase):
         )
 
     def test_environ_extraction(self):
-        """
-        Test inclusion of variables from the environ
-        """
+        # Test inclusion of variables from the environ
         os.environ['vegetables'] = '"carrot,peas,green beans"'
         os.environ['smellythings'] = ''
         self.assertEqual(
@@ -60,9 +56,7 @@ class TestIncludeParser(TestCase):
         )
 
     def test_combination(self):
-        """
-        Test having both environment vars and arbitrary keyvals
-        """
+        # Test having both environment vars and arbitrary keyvals
         os.environ['bears'] = 'polar,brown,black'
         os.environ['notbears'] = 'unicorn,griffin,sphinx,otter'
         command_line = ['bears', 'notbears', 'e=mc2', 'v=iR', 'qwertyuiop']

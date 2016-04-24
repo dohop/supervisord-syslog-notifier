@@ -66,15 +66,16 @@ def send_ok(stdout):
 
 def process_io(stdin, stdout):
     """
-    Handle comunication with Supervisor to receive events and their payloads
+    Handle communication with Supervisor to receive events and their payloads
     """
     send_ready(stdout)
 
     line = stdin.readline()
-    print line
-    # line = 'ver:3.0 server:supervisor serial:0 pool:logstash-notifier poolserial:0 eventname:PROCESS_STATE_STARTING len:84\n'
+    # line = 'ver:3.0 server:supervisor serial:0 pool:logstash-notifier
+    #         poolserial:0 eventname:PROCESS_STATE_STARTING len:84\n'
     keyvals = get_keyvals(line)
-    # keyvals = {'ver': '3.0', 'poolserial': '0', 'len': '84', 'server': 'supervisor', 'eventname': 'PROCESS_STATE_STARTING', 'serial': '0', 'pool': 'logstash-notifier'}
+    # keyvals = {'ver': '3.0', 'poolserial': '0', 'len': '84', 'server': 'supervisor',
+    #            'eventname': 'PROCESS_STATE_STARTING', 'serial': '0', 'pool': 'logstash-notifier'}
     payload = stdin.read(int(keyvals['len']))
     # payload = 'processname:logstash-notifier groupname:logstash-notifier from_state:STOPPED tries:0'
 
@@ -88,18 +89,15 @@ def supervisor_event_loop(stdin, stdout, *events):
     Runs forever to receive supervisor events
     """
     while True:
-        print '.'
         keyvals, body, data = process_io(stdin, stdout)
 
         # if we're not listening to the event that we've received, ignore it
         if keyvals['eventname'] not in events:
-            print '.ignored'
             send_ok(stdout)
             continue
 
         # if it's an event we caused, ignore it
         if body['processname'] == 'logstash-notifier':
-            print '.skipped'
             send_ok(stdout)
             continue
 

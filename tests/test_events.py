@@ -86,11 +86,10 @@ class TestEventLoop(TestCase):
         for keyword, value in kwargs.iteritems():
             payload += ' {}:{}'.format(keyword, value)
 
-
         line = 'eventname:{event} len:{length}\n{payload}'.format(
-            event = event,
-            length = len(payload),
-            payload = payload,
+            event=event,
+            length=len(payload),
+            payload=payload,
         )
         return line
 
