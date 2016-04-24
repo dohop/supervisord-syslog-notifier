@@ -18,10 +18,9 @@ Tests for various event handler functions
 """
 
 import six
-from six.moves import cStringIO, xrange
 
 from logstash_notifier import get_keyvals, parse_payload, process_io, supervisor_event_loop
-from .compat import TestCase
+from .compat import TestCase, cStringIO, xrange
 
 
 class TestHeaderExtraction(TestCase):

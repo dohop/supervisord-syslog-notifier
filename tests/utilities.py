@@ -24,8 +24,7 @@ import threading
 
 from time import sleep
 from testfixtures import TempDirectory
-from six.moves import socketserver
-from .compat import TestCase
+from .compat import TestCase, socketserver
 
 
 class LogstashHandler(socketserver.BaseRequestHandler):
