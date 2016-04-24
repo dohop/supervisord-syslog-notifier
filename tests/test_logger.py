@@ -20,7 +20,7 @@ Tests for getting the right log handler
 import logstash
 import os
 from mock import patch
-from logstash_notifier import get_logger, get_host_port_socket, get_log_handler
+from logstash_notifier.logger import get_host_port_socket, get_log_handler
 from .compat import TestCase, cStringIO, xrange
 
 
