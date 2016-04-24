@@ -20,9 +20,10 @@ Tests for getting the right log handler
 import logging
 import logstash
 import os
+
 from mock import patch
 from logstash_notifier.logger import get_host_port_socket, get_log_handler, newline_formatter, get_logger
-from .compat import TestCase, cStringIO, xrange
+from .compat import TestCase
 
 
 class TestLogger(TestCase):
@@ -79,10 +80,10 @@ class TestNewlineFormatter(TestCase):
         self.assertEqual(self.wrapped(b'bar\n'), b'bar\n')
 
     def test_newline_formatter_with_unicode(self):
-        self.assertEqual(self.wrapped(u'bar'), u'bar\n')
+        self.assertEqual(self.wrapped(unicode('bar')), unicode('bar\n'))
 
     def test_newline_formatter_with_unicode_with_trailing_linebreak(self):
-        self.assertEqual(self.wrapped(u'bar\n'), u'bar\n')
+        self.assertEqual(self.wrapped(unicode('bar\n')), unicode('bar\n'))
 
 
 class TestGetLogger(TestCase):
