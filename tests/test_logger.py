@@ -20,11 +20,11 @@ Tests for getting the right log handler
 import logging
 import logstash
 import os
-import sys
+import six
 
 from mock import patch
 from logstash_notifier.logger import get_host_port_socket, get_log_handler, newline_formatter, get_logger
-from .compat import TestCase, skipIf
+from .compat import TestCase
 
 
 class TestLogger(TestCase):
@@ -80,13 +80,11 @@ class TestNewlineFormatter(TestCase):
     def test_newline_formatter_with_bytes_with_trailing_linebreak(self):
         self.assertEqual(self.wrapped(b'bar\n'), b'bar\n')
 
-    @skipIf(sys.version_info.major == 3 and sys.version_info.minor == 2, 'No unicode prefix on Python 3.2')
     def test_newline_formatter_with_unicode(self):
-        self.assertEqual(self.wrapped(u'bar'), u'bar\n')
+        self.assertEqual(self.wrapped(six.u('bar')), six.u('bar\n'))
 
-    @skipIf(sys.version_info.major == 3 and sys.version_info.minor == 2, 'No unicode prefix on Python 3.2')
     def test_newline_formatter_with_unicode_with_trailing_linebreak(self):
-        self.assertEqual(self.wrapped(u'bar\n'), u'bar\n')
+        self.assertEqual(self.wrapped(six.u('bar\n')), six.u('bar\n'))
 
 
 class TestGetLogger(TestCase):
