@@ -151,18 +151,24 @@ def __newline_formatter(func):
     return __wrapped_func
 
 
-def get_logger(append_newline=False):
+def get_host_port_socket():
     """
-    Sets up the logger used to send the supervisor events and messages to the logstash server,
-    via the socket type provided, port and host defined in the environment
+    Returns values from the environment
     """
     try:
         host = os.environ['LOGSTASH_SERVER']
         port = int(os.environ['LOGSTASH_PORT'])
         socket_type = os.environ['LOGSTASH_PROTO']
     except KeyError:
-        sys.exit("LOGSTASH_SERVER, LOGSTASH_PORT and LOGSTASH_PROTO are required.")
+        raise RuntimeError("LOGSTASH_SERVER, LOGSTASH_PORT and LOGSTASH_PROTO are required.")
 
+    return host, port, socket_type
+
+
+def get_log_handler(socket_type):
+    """
+    Returns the log handler class based upon the socket type
+    """
     logstash_handler = None
     if socket_type == 'udp':
         logstash_handler = logstash.UDPLogstashHandler
@@ -171,10 +177,17 @@ def get_logger(append_newline=False):
     else:
         raise RuntimeError('Unknown protocol defined: %r' % socket_type)
 
-    logger = logging.getLogger('supervisor')
+    return logstash_handler
+
+
+def get_logger(append_newline=False):
+    """
+    Sets up the logger used to send the supervisor events and messages to the logstash server,
+    via the socket type provided, port and host defined in the environment
+    """
+    host, port, socket_type = get_host_port_socket()
+    logstash_handler = get_log_handler(socket_type)
     handler = logstash_handler(host, port, version=1)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
 
     # To be able to append newlines to the logger output, we'll need to wrap the formatter.
     # As we can't predict the formatter class, it's easier to wrap the format() function,
@@ -182,6 +195,10 @@ def get_logger(append_newline=False):
     # whose name is determined by the logstash class.
     if append_newline:
         handler.formatter.format = __newline_formatter(handler.formatter.format)
+
+    logger = logging.getLogger('supervisor')
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
     return logger
 
