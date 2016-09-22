@@ -3,6 +3,5 @@ pylint
 pylint-mccabe
 testfixtures
 nose
-# needed for python 2.6
-unittest2
-coverage
+unittest2 # needed for python 2.6
+coverage # needed for python 2.6
