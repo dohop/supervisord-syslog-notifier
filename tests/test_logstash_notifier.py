@@ -24,8 +24,8 @@ try:
 except ImportError:
     from unittest import TestCase
 
-from .utilities import BaseSupervisorTestCase, record, get_config
 from logstash_notifier import get_value_from_input
+from .utilities import BaseSupervisorTestCase, record, get_config
 
 
 class SupervisorLoggingTestCase(BaseSupervisorTestCase):
