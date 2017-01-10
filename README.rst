@@ -47,12 +47,12 @@ Add the plugin as an event listener:
 
     # Capture stdout/stderr
     [eventlistener:logging]
-    command = logstash_notifier
+    command = logstash_notifier --capture-output
     events = PROCESS_LOG
 
     # Capture state changes and stdout/stderr
     [eventlistener:logging]
-    command = logstash_notifier
+    command = logstash_notifier --capture-output
     events = PROCESS_STATE,PROCESS_LOG
 
 If you don't wish to define the environment variables for the entire
