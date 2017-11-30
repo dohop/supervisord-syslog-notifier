@@ -61,7 +61,7 @@ shell, you can pass them in via Supervisor's configuration:
 ::
 
     [eventlistener:logging]
-    environment=LOGSTASH_SERVER="127.0.0.1",LOGSTASH_PORT="12202",LOGSTASH_PROTO="tcp"
+    environment=LOGSTASH_SERVER="127.0.0.1",LOGSTASH_PORT="12201",LOGSTASH_PROTO="tcp"
     command=logstash_notifier
     events=PROCESS_STATE
 
