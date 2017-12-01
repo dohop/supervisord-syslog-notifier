@@ -67,11 +67,11 @@ shell, you can pass them in via Supervisor's configuration:
     
 Enable the log events in your program:
 
-```
-[program:yourprogram]
-stdout_events_enabled = true
-stderr_events_enabled = true
-```
+::
+
+    [program:yourprogram]
+    stdout_events_enabled = true
+    stderr_events_enabled = true
 
 Advanced Usage
 --------------
