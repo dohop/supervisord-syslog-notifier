@@ -25,8 +25,8 @@ with open('requirements.txt') as requirements:
 
         setup(
             name='supervisor-logstash-notifier',
-            version='0.2.2',
-            packages=find_packages(),
+            version='0.2.4',
+            packages=find_packages(exclude=['tests']),
             url='https://github.com/dohop/supervisor-logstash-notifier',
             license='Apache 2.0',
             author='aodj',
