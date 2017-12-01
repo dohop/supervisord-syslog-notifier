@@ -214,8 +214,7 @@ class Main(object):
                 return False
             elif filename.endswith('.js'):
                 return True
-            else:
-                return False
+            return False
 
         try:
             return self._changed_js_files
@@ -257,9 +256,9 @@ class Main(object):
         if all(good):
             print("Your code looks good. Continuing with commit.")
             return True
-        else:
-            print("Pre-commit tests failed.")
-            return False
+
+        print("Pre-commit tests failed.")
+        return False
 
 
 def pylint_rating(result):
