@@ -128,7 +128,6 @@ def __newline_formatter(func):
             # We are redefining the variable type on purpose since python
             # broke backwards compatibility between 2 & 3. Pylint will
             # throw an error on this, so we have to disable the check.
-            # pylint: disable=redefined-variable-type
             line_ending = b"\n"
 
         # Avoid double line endings
@@ -203,14 +202,14 @@ def application(include=None, capture_output=False, append_newline=False):
             for variable in include:
                 user_data.update(get_value_from_input(variable))
 
-            if len(user_data) > 0:
+            if user_data:
                 extra['user_data'] = user_data
 
         # Events, like starting/stopping don't have a message body and
         # the data is set to '' in event_data(). Stdout/Stderr events
         # do have a message body, so use that if it's present, or fall
         # back to eventname/processname if it's not.
-        if not len(event_data) > 0:
+        if not event_data:
             event_data = '%s %s' % (
                 headers['eventname'],
                 event_body['processname']
