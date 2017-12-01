@@ -64,6 +64,14 @@ shell, you can pass them in via Supervisor's configuration:
     environment=LOGSTASH_SERVER="127.0.0.1",LOGSTASH_PORT="12201",LOGSTASH_PROTO="tcp"
     command=logstash_notifier
     events=PROCESS_STATE
+    
+Enable the log events in your program:
+
+```
+[program:yourprogram]
+stdout_events_enabled = true
+stderr_events_enabled = true
+```
 
 Advanced Usage
 --------------
