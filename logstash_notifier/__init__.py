@@ -19,23 +19,22 @@ A module for dispatching Supervisor PROCESS_STATE events to a Syslog instance
 """
 
 import argparse
-import logging
 import os
 import signal
 import sys
 import warnings
 
-import logstash
+from .logger import get_logger
 
 
-def get_headers(line):
+def get_keyvals(line):
     """
     Parse Supervisor message headers.
     """
     return dict([x.split(':') for x in line.split()])
 
 
-def eventdata(payload):
+def parse_payload(payload):
     """
     Parse a Supervisor event.
     """
@@ -44,7 +43,7 @@ def eventdata(payload):
     else:
         headerinfo = payload
         data = ''
-    headers = get_headers(headerinfo)
+    headers = get_keyvals(headerinfo)
     return headers, data
 
 
@@ -64,37 +63,52 @@ def send_ok(stdout):
     stdout.flush()
 
 
-def supervisor_events(stdin, stdout, *events):
+def process_io(stdin, stdout):
+    """
+    Handle communication with Supervisor to receive events and their payloads
+    """
+    send_ready(stdout)
+
+    line = stdin.readline()
+    # line = 'ver:3.0 server:supervisor serial:0 pool:logstash-notifier
+    #         poolserial:0 eventname:PROCESS_STATE_STARTING len:84\n'
+    keyvals = get_keyvals(line)
+    # keyvals = {'ver': '3.0', 'poolserial': '0', 'len': '84', 'server': 'supervisor',
+    #            'eventname': 'PROCESS_STATE_STARTING', 'serial': '0', 'pool': 'logstash-notifier'}
+    payload = stdin.read(int(keyvals['len']))
+    # payload = 'processname:logstash-notifier groupname:logstash-notifier from_state:STOPPED tries:0'
+
+    body, data = parse_payload(payload)
+
+    return keyvals, body, data
+
+
+def supervisor_event_loop(stdin, stdout, *events):
     """
     Runs forever to receive supervisor events
     """
     while True:
-        send_ready(stdout)
+        keyvals, body, data = process_io(stdin, stdout)
 
-        line = stdin.readline()
-        headers = get_headers(line)
-
-        payload = stdin.read(int(headers['len']))
-        event_body, event_data = eventdata(payload)
-
-        if headers['eventname'] not in events:
+        # if we're not listening to the event that we've received, ignore it
+        if keyvals['eventname'] not in events:
             send_ok(stdout)
             continue
 
-        if event_body['processname'] == 'logstash-notifier':
+        # if it's an event we caused, ignore it
+        if body['processname'] == 'logstash-notifier':
             send_ok(stdout)
             continue
 
-        yield headers, event_body, event_data
+        yield keyvals, body, data
 
         send_ok(stdout)
 
 
 def get_value_from_input(text):
     """
-    Parses the input from the command line to work out if we've been given the
-    name of an environment variable to include or a keyval of arbitrary data to
-    include instead
+    Parses the input from the command line to work out if we've been given the name of an environment
+    variable to include or a keyval of arbitrary data to include instead
     """
     values = {}
     if '=' in text:
@@ -140,51 +154,11 @@ def __newline_formatter(func):
     return __wrapped_func
 
 
-def get_logger(append_newline=False):
-    """
-    Sets up the logger used to send the supervisor events and messages to
-    the logstash server, via the socket type provided, port and host defined
-    in the environment
-    """
-
-    try:
-        host = os.environ['LOGSTASH_SERVER']
-        port = int(os.environ['LOGSTASH_PORT'])
-        socket_type = os.environ['LOGSTASH_PROTO']
-    except KeyError:
-        sys.exit("LOGSTASH_SERVER, LOGSTASH_PORT and LOGSTASH_PROTO are "
-                 "required.")
-
-    logstash_handler = None
-    if socket_type == 'udp':
-        logstash_handler = logstash.UDPLogstashHandler
-    elif socket_type == 'tcp':
-        logstash_handler = logstash.TCPLogstashHandler
-    else:
-        raise RuntimeError('Unknown protocol defined: %r' % socket_type)
-
-    logger = logging.getLogger('supervisor')
-    handler = logstash_handler(host, port, version=1)
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
-    # To be able to append newlines to the logger output, we'll need to
-    # wrap the formatter. As we can't predict the formatter class, it's
-    # easier to wrap the format() function, which is part of the logger
-    # spec than it is to override/wrap the formatter class, whose name
-    # is determined by the logstash class.
-    if append_newline:
-        handler.formatter.format = \
-            __newline_formatter(handler.formatter.format)
-
-    return logger
-
-
 def application(include=None, capture_output=False, append_newline=False):
     """
     Main application loop.
     """
-    logger = get_logger(append_newline=append_newline)
+    log_instance = get_logger(append_newline=append_newline)
 
     events = ['BACKOFF', 'FATAL', 'EXITED', 'STOPPED', 'STARTING', 'RUNNING']
     events = ['PROCESS_STATE_' + state for state in events]
@@ -192,10 +166,9 @@ def application(include=None, capture_output=False, append_newline=False):
     if capture_output:
         events += ['PROCESS_LOG_STDOUT', 'PROCESS_LOG_STDERR']
 
-    for headers, event_body, event_data in supervisor_events(
-            sys.stdin, sys.stdout, *events):
-        extra = event_body.copy()
-        extra['eventname'] = headers['eventname']
+    for keyvals, body, data in supervisor_event_loop(sys.stdin, sys.stdout, *events):
+        extra = body.copy()
+        extra['eventname'] = keyvals['eventname']
 
         if include is not None:
             user_data = {}
@@ -205,17 +178,13 @@ def application(include=None, capture_output=False, append_newline=False):
             if user_data:
                 extra['user_data'] = user_data
 
-        # Events, like starting/stopping don't have a message body and
-        # the data is set to '' in event_data(). Stdout/Stderr events
-        # do have a message body, so use that if it's present, or fall
-        # back to eventname/processname if it's not.
-        if not event_data:
-            event_data = '%s %s' % (
-                headers['eventname'],
-                event_body['processname']
-            )
+        # Events, like starting/stopping don't have a message body and the data is set to '' in data().
+        # Stdout/Stderr events do have a message body, so use that if it's present, or fallback to
+        # eventname/processname if it's not.
+        if not len(data) > 0:
+            data = '%s %s' % (keyvals['eventname'], body['processname'])
 
-        logger.info(event_data, extra=extra)
+        log_instance.info(data, extra=extra)
 
 
 def run_with_coverage():  # pragma: no cover
@@ -225,10 +194,8 @@ def run_with_coverage():  # pragma: no cover
     try:
         import coverage
     except ImportError:
-        warnings.warn(
-            'Coverage data will not be generated because coverage is not '
-            'installed. Please run `pip install coverage` and try again.'
-        )
+        warnings.warn('Coverage data will not be generated because coverage is not installed. '
+                      'Please run `pip install coverage` and try again.')
         return
 
     coverage.process_startup()
@@ -245,8 +212,8 @@ def main():  # pragma: no cover
     parser.add_argument(
         '-i', '--include',
         nargs='*', default=list(),
-        help='include named environment variables and/or arbitrary metadata '
-             'keyvals in messages')
+        help='include named environment variables and/or arbitrary metadata keyvals in messages'
+    )
     parser.add_argument(
         '-c', '--coverage',
         action='store_true', default=False,
@@ -255,8 +222,7 @@ def main():  # pragma: no cover
     parser.add_argument(
         '-o', '--capture-output',
         action='store_true', default=False,
-        help='capture stdout/stderr output from supervisor '
-             'processes in addition to events'
+        help='capture stdout/stderr output from supervisor processes in addition to events'
     )
     parser.add_argument(
         '-n', '--append-newline',

@@ -24,12 +24,7 @@ import threading
 
 from time import sleep
 from testfixtures import TempDirectory
-from six.moves import socketserver
-
-try:
-    from unittest2 import TestCase
-except ImportError:
-    from unittest import TestCase
+from .compat import TestCase, socketserver
 
 
 class LogstashHandler(socketserver.BaseRequestHandler):
@@ -50,6 +45,7 @@ class BaseSupervisorTestCase(TestCase):
     Base class for running supervisor tests
     """
     maxDiff = None
+    integration_test = 1
 
     def __init__(self, *args, **kwargs):
         super(BaseSupervisorTestCase, self).__init__(*args, **kwargs)

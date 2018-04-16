@@ -1,11 +1,9 @@
 language: python
 python:
-- '2.6'
 - '2.7'
-- '3.2'
-- '3.3'
 - '3.4'
 - '3.5'
+- '3.6'
 env:
 - SUPERVISOR_PYTHON_VERSION=2.7
 install:
@@ -17,8 +15,7 @@ install:
 - ./install_supervisor
 - pip install coveralls
 script:
-- if [ "$TRAVIS_PYTHON_VERSION" != "2.6" ]; then .githooks/pre-commit -f; fi
-- nosetests --with-coverage --cover-erase --cover-tests
+- nosetests --verbose --attr='!integration_test' --with-coverage --cover-erase --cover-tests
 sudo: false
 after_success:
 - coverage combine
