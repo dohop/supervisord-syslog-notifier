@@ -120,6 +120,40 @@ def get_value_from_input(text):
     return values
 
 
+def __newline_formatter(func):
+    """
+    Wrap a formatter function so a newline is appended if needed to the output
+    """
+    def __wrapped_func(*args, **kwargs):
+        """
+        Wrapper function that appends a newline to result of original fucntion
+        """
+        result = func(*args, **kwargs)
+
+        # The result may be a string, or bytes. In python 2 they are the
+        # same, but in python 3, they are not. First, check for strings
+        # as that works the same in python 2 and 3, THEN check for bytes,
+        # as that implementation is python 3 specific. If it's neither
+        # (future proofing), we use a regular new line
+        line_ending = "\n"
+        if isinstance(result, str):
+            line_ending = "\n"
+        elif isinstance(result, bytes):
+            # We are redefining the variable type on purpose since python
+            # broke backwards compatibility between 2 & 3. Pylint will
+            # throw an error on this, so we have to disable the check.
+            line_ending = b"\n"
+
+        # Avoid double line endings
+        if not result.endswith(line_ending):
+            result = result + line_ending
+
+        return result
+
+    # Return the wrapper
+    return __wrapped_func
+
+
 def application(include=None, capture_output=False, append_newline=False):
     """
     Main application loop.
@@ -141,7 +175,7 @@ def application(include=None, capture_output=False, append_newline=False):
             for variable in include:
                 user_data.update(get_value_from_input(variable))
 
-            if len(user_data) > 0:
+            if user_data:
                 extra['user_data'] = user_data
 
         # Events, like starting/stopping don't have a message body and the data is set to '' in data().
