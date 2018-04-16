@@ -7,6 +7,9 @@ python:
 - '3.4'
 - '3.5'
 - '3.6'
+- '3.7'
+- 'pypy2.7'
+- 'pypy3.5'
 env:
 - SUPERVISOR_PYTHON_VERSION=2.7
 install:
