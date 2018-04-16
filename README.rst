@@ -16,7 +16,7 @@ Logstash instance.
 Installation
 ------------
 
-Python 2.7 or Python 3.2+ is required.
+Python 2.7 or Python 3.4+ is required.
 
 ::
 
